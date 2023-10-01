@@ -5,6 +5,7 @@
 // Mostly a copy paste of tree-sitter-javascript/src/scanner.c
 
 enum TokenType {
+  SEMICOLON_OR_EOF,
   AUTOMATIC_SEMICOLON,
   IMPORT_LIST_DELIMITER,
   SAFE_NAV,
@@ -273,6 +274,20 @@ static bool scan_for_word(TSLexer *lexer, const char* word, unsigned len) {
     return true;
 }
 
+static bool scan_semicolon_or_eof(TSLexer *lexer) {
+  lexer->result_symbol = SEMICOLON_OR_EOF;
+  lexer->mark_end(lexer);
+  if (lexer->eof(lexer))
+    return true;
+
+  if (lexer->lookahead == ';') {
+    advance(lexer);
+    lexer->mark_end(lexer);
+    return true;
+  }
+  return false;
+}
+
 static bool scan_automatic_semicolon(TSLexer *lexer) {
   lexer->result_symbol = AUTOMATIC_SEMICOLON;
   lexer->mark_end(lexer);
@@ -501,6 +516,12 @@ bool tree_sitter_kotlin_external_scanner_scan(void *payload, TSLexer *lexer,
                                                   const bool *valid_symbols) {
 
   bool *in_string = payload;
+
+  if (valid_symbols[SEMICOLON_OR_EOF]) {
+      bool ret = scan_semicolon_or_eof(lexer);
+      if(ret)
+        return ret;
+  }
 
   if (valid_symbols[AUTOMATIC_SEMICOLON]) {
     bool ret = scan_automatic_semicolon(lexer);

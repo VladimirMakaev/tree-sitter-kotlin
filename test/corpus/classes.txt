@@ -358,3 +358,78 @@ data class JwtConfiguration(
         (simple_identifier)
         (user_type
           (type_identifier))))))
+
+================================================================================
+Generic class with type constraints
+================================================================================
+
+class SimpleClass<ModelData, DerivedData> 
+constructor(
+    private val modelData: ModelData,
+    private val derivedData: DerivedData
+) where ModelData : ProvidesId, DerivedData : ProvidesName {
+    fun printInfo() {
+        println("Id: ${modelData.getId()}, Name: ${derivedData.getName()}")
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (class_declaration
+    (type_identifier)
+    (type_parameters
+      (type_parameter
+        (type_identifier))
+      (type_parameter
+        (type_identifier)))
+    (primary_constructor
+      (class_parameter
+        (modifiers
+          (visibility_modifier))
+        (simple_identifier)
+        (user_type
+          (type_identifier)))
+      (class_parameter
+        (modifiers
+          (visibility_modifier))
+        (simple_identifier)
+        (user_type
+          (type_identifier))))
+    (type_constraints
+      (type_constraint
+        (type_identifier)
+        (user_type
+          (type_identifier)))
+      (type_constraint
+        (type_identifier)
+        (user_type
+          (type_identifier))))
+    (class_body
+      (function_declaration
+        (simple_identifier)
+        (function_value_parameters)
+        (function_body
+          (statements
+            (call_expression
+              (simple_identifier)
+              (call_suffix
+                (value_arguments
+                  (value_argument
+                    (string_literal
+                      (interpolated_expression
+                        (call_expression
+                          (navigation_expression
+                            (simple_identifier)
+                            (navigation_suffix
+                              (simple_identifier)))
+                          (call_suffix
+                            (value_arguments))))
+                      (interpolated_expression
+                        (call_expression
+                          (navigation_expression
+                            (simple_identifier)
+                            (navigation_suffix
+                              (simple_identifier)))
+                          (call_suffix
+                            (value_arguments)))))))))))))))

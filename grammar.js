@@ -96,6 +96,8 @@ module.exports = grammar({
     // ambiguity between prefix expressions and annotations before functions
     [$._statement, $.prefix_expression],
     [$._statement, $.prefix_expression, $.modifiers],
+    [$._type_declaration, $.infix_expression],
+    [$._type_declaration, $.infix_expression],
     [$.prefix_expression, $.when_subject],
     [$.prefix_expression, $.value_argument],
 
@@ -121,6 +123,7 @@ module.exports = grammar({
   ],
 
   externals: $ => [
+    $._semicolon_or_eof,
     $._automatic_semicolon,
     $._import_list_delimiter,
     $.safe_nav,
@@ -153,7 +156,12 @@ module.exports = grammar({
       repeat($.file_annotation),
       optional($.package_header),
       repeat($.import_list),
-      repeat(seq($._statement, $._semi))
+      choice(
+        $._type_declaration_list,
+        $._statement_list,
+        seq($._type_declaration, $._statement_list),
+        seq($._statement, $._type_declaration_list)
+      )
     ),
 
     shebang_line: $ => seq("#!", /[^\r\n]*/),
@@ -183,8 +191,6 @@ module.exports = grammar({
 
     import_alias: $ => seq("as", alias($.simple_identifier, $.type_identifier)),
 
-    top_level_object: $ => seq($._declaration, optional($._semi)),
-
     type_alias: $ => seq(
       optional($.modifiers),
       "typealias",
@@ -194,9 +200,12 @@ module.exports = grammar({
       $._type
     ),
 
-    _declaration: $ => choice(
+    _type_declaration: $ => choice(
       $.class_declaration,
       $.object_declaration,
+    ),
+
+    _declaration: $ => choice(
       $.function_declaration,
       $.property_declaration,
       // TODO: it would be better to have getter/setter only in
@@ -311,6 +320,7 @@ module.exports = grammar({
     _class_member_declarations: $ => repeat1(seq($._class_member_declaration, $._semi)),
 
     _class_member_declaration: $ => choice(
+      $._type_declaration,
       $._declaration,
       $.companion_object,
       $.anonymous_initializer,
@@ -343,7 +353,7 @@ module.exports = grammar({
 
     _receiver_type: $ => seq(
       optional($.type_modifiers),
-      choice (
+      choice(
         $._type_reference,
         $.parenthesized_type,
         $.nullable_type
@@ -540,12 +550,23 @@ module.exports = grammar({
 
     // ==========
     // Statements
-    // ==========
+    // ========== 
 
-    statements: $ => seq(
+    statements: $ => choice(
+      $._type_declaration_list,
+      seq($._statement, $._type_declaration_list),
+      seq($._type_declaration, $._statement_list),
+      $._statement_list,
+    ),
+
+    _type_declaration_list: $ => choice(
+      $._type_declaration,
+      seq($._type_declaration, optional($._explicit_semi), $._type_declaration_list)
+    ),
+
+    _statement_list: $ => choice(
       $._statement,
-      repeat(seq($._semi, $._statement)),
-      optional($._semi),
+      seq($._statement, $._semi, $._statement_list),
     ),
 
     _statement: $ => choice(
@@ -559,13 +580,17 @@ module.exports = grammar({
         )
       )
     ),
+    _statementOrTypeDeclaration: $ => choice(
+      $._type_declaration,
+      $._statement,
+    ),
 
     label: $ => token(seq(
       /[a-zA-Z_][a-zA-Z_0-9]*/,
       "@"
     )),
 
-    control_structure_body: $ => choice($._block, $._statement),
+    control_structure_body: $ => choice($._block, $._statementOrTypeDeclaration),
 
     _block: $ => prec(PREC.BLOCK, seq("{", optional($.statements), "}")),
 
@@ -606,6 +631,8 @@ module.exports = grammar({
     // See also https://github.com/tree-sitter/tree-sitter/issues/160
     // generic EOF/newline token
     _semi: $ => $._automatic_semicolon,
+
+    _explicit_semi: $ => $._semicolon_or_eof,
 
     assignment: $ => choice(
       prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, $._assignment_and_operator, $._expression)),
