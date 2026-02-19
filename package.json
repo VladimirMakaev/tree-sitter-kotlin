@@ -18,7 +18,9 @@
     "vendor-jetbrains": "node tools/vendor-jetbrains-tests.js",
     "cross-validate": "node tools/cross-validation/main.js",
     "cross-validate:debug": "node tools/cross-validation/main.js --debug",
-    "cross-validate:test": "npx vitest run"
+    "cross-validate:test": "npx vitest run",
+    "fuzz": "tree-sitter fuzz --iterations 10000",
+    "fuzz:targeted": "node tools/fuzz/fuzz-scanner.js"
   },
   "repository": {
     "type": "git",

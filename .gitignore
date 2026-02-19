@@ -39,3 +39,6 @@ tools/cross-validation/fixtures/
 
 # Generated cross-validation report (regenerated via npm run cross-validate)
 tools/cross-validation/report.md
+
+# Fuzzer crash artifacts (regenerated via npm run fuzz:targeted)
+tools/fuzz/crashes/
