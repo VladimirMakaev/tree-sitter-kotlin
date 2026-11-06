@@ -867,12 +867,13 @@ module.exports = grammar({
       ))
     )),
 
-    // `prec.right` so a lone getter does not reduce ambiguously against the
-    // getter-then-setter reading; `property_declaration`'s own `prec.right`
-    // used to supply that while the pair was written inline.
-    _property_accessors: $ => prec.right(choice(
-      seq($.getter, optional($.setter)),
-      seq($.setter, optional($.getter))
+    // Repeat getter/setter choices using this existing hidden rule as the
+    // repetition state. A separate repeat1 creates another parse-table symbol.
+    // Keep the helper nonempty and right-associative; the property tail supplies
+    // optionality and a lone accessor must not reduce prematurely.
+    _property_accessors: $ => prec.right(seq(
+      choice($.getter, $.setter),
+      optional($._property_accessors)
     )),
 
     // An explicit backing field, `val x: Any field: String = "OK"`. Default
